@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <!-- 提供公共配置, 如果export节点中配置可以覆盖公共配置 -->
+    <commons>
+        <file>
+            <!-- 待压缩文件所在目录，目录结构不存在，将新建目录结构目前只支持${currentDateStr}、${yesterdayStr}、${tomorrowStr}，表示当前、昨天、明天日期的yyyyMMdd格式 -->
+            <exportDir>/xxx/${currentDateStr}/txt</exportDir>
+            <!-- 输出文件的后缀名 -->
+            <suffix>txt</suffix>
+            <!-- 输出文件内容的格式 -->
+            <content>
+                <!-- 输出文件内容的默认内容，位于文件内容的最前面 -->
+                <defaultContent></defaultContent>
+                <!-- 必须！sql查出的纪录之间的分隔符 -->
+                <recordSeparator></recordSeparator>
+                <!-- 必须！sql查出的每条纪录的各字段之间的分隔符 -->
+                <columnSeparator></columnSeparator>
+            </content>
+        </file>
+    </commons>
+
+    <!-- 用于配置多个export -->
+    <exports>
+        <!-- 一个export节点表示一个文件生成配置 -->
+        <export>
+            <!-- 必须！用于拼装提取数据的sql语句 -->
+            <sql>
+                <!-- 必须！用于提取数据的主体sql语句 -->
+                <sqlString></sqlString>
+            </sql>
+
+            <file>
+                <!-- 必须！待压缩文件所在目录，目录结构不存在，将新建目录结构目前只支持${currentDateStr}、${yesterdayStr}、${tomorrowStr}，表示当前、昨天、明天日期的yyyyMMdd格式 -->
+                <exportDir>/xxx/${currentDateStr}/txt</exportDir>
+                <!-- 必须！输出文件的名称, 目前只支持${currentDateStr}，表示当前日期的yyyyMMdd格式 -->
+                <fileName>export-${currentDateStr}-01</fileName>
+                <!-- 必须！输出文件的后缀名 -->
+                <suffix>txt</suffix>
+                <!-- 必须！输出文件内容的格式 -->
+                <content>
+                    <!-- 输出文件内容的默认内容，位于文件内容的最前面 -->
+                    <defaultContent></defaultContent>
+                    <!-- 必须！sql查出的纪录之间的分隔符 -->
+                    <recordSeparator></recordSeparator>
+                    <!-- 必须！sql查出的每条纪录的各字段之间的分隔符 -->
+                    <columnSeparator></columnSeparator>
+                </content>
+            </file>
+        </export>
+
+        <export>
+            ...
+        </export>
+    </exports>
+</root>

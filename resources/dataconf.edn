@@ -1,0 +1,21 @@
+{:database-orcl {:classname "oracle.jdbc.driver.OracleDriver"
+                    :subprotocol "oracle"
+                    :subname "thin:@127.0.0.1:1521:ORCL"
+                    :user "scott"
+                    :password "scott"
+                   }
+ :database-mysql {:classname "com.mysql.jdbc.Driver"
+                     :subprotocol "mysql"
+                     :subname "//127.0.0.1:3306/test"
+                     :user "root"
+                     :password "root"
+                    }
+
+ :filepath "C:\\Users\\BBP\\Desktop\\hello1.txt"
+
+ :flag "@!@"
+
+ :query {
+           :query-all "select * from student"
+        }
+ }

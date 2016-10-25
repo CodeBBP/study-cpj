@@ -1,0 +1,59 @@
+{
+   :commons {  ;;提供公共配置, 如果export节点中配置可以覆盖公共配置
+        :file{
+            :exportDir "E:\\document\\HNdianxing\\" ;;待压缩文件所在目录
+            :suffix "txt" ;;输出文件的后缀名
+            :content { ;;输出文件内容的格式
+                :defaultContent "===========河南电信=========="  ;;输出文件内容的默认内容，位于文件内容的最前面
+                :recordSeparator "\r\n" ;;sql查出的纪录之间的分隔符
+                :columnSeparator "@!@" ;;sql查出的每条纪录的各字段之间的分隔符
+            }
+        }
+   }
+
+   :exports [
+        ;;一个map节点表示一个文件生成配置
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_admin_district_ha"
+        }
+
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha0"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha1"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha2"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha3"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha4"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha5"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha6"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha7"
+        }
+        {
+            :sql "select *from student"
+            :fileName "nms_bas_station_ ha8"
+        }
+   ]
+
+}
