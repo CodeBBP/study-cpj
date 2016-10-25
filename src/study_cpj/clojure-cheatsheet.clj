@@ -265,5 +265,125 @@
 (partition 4 6 ["a"] (range 20));;=> ((0 1 2 3) (6 7 8 9) (12 13 14 15) (18 19 "a"))
 (partition 4 4 ["pad"] (range 10))
 
-;;partition-all ->  (partition-all n)(partition-all n coll)(partition-all n step coll)
+;;/// partition-all ->  (partition-all n)(partition-all n coll)(partition-all n step coll)
 ;;Returns a lazy sequence of lists like partition, but may include partitions with fewer than n items at the end.
+;;Returns a stateful transducer when no collection is provided.
+;;① 返回一个以n分割partition序列，并且包含不能构造完整partition的最后几个元素
+;;② 如果没有提供coll，则返回一个transducer
+(partition 4 [0 1 2 3 4 5 6 7 8 9])
+(partition-all 4 [0 1 2 3 4 5 6 7 8 9])
+(partition-all 2 4 [0 1 2 3 4 5 6 7 8 9])
+
+;;/// partition-by -> (partition-by f)(partition-by f coll)
+;;Applies f to each value in coll, splitting it each time f returns a new value.  Returns a lazy seq of partitions.
+;;Returns a stateful transducer when no collection is provided.
+;;① 对coll中的每一个元素都使用f进行求值，并将求值结果相同的相邻元素视为一个partition
+;;② 如果没有提供coll，将返回一个transducer
+(partition-by #(= 3 %) [1 2 3 4 5])
+(partition-by #(= 3 %) [1 2 3 3 4 5 3])
+(partition-by odd? [1 1 1 2 2 3 3])
+(partition-by identity "Leeeeeerrroyyy")
+(partition-by identity "ABBA")
+(partition-by count ["a" "b" "ab" "ac" "c"])
+
+;;/// split-at -> (split-at n coll)
+;;Returns a vector of [(take n coll) (drop n coll)]
+(split-at 2 [1 2 3 4 5])
+
+;;/// split-with -> (split-with pred coll)
+;;Returns a vector of [(take-while pred coll) (drop-while pred coll)]
+(split-with (partial >= 3) [1 2 3 4 5])
+
+;;/// shuffle -> (shuffle coll)
+;;Return a random permutation of coll (返回一个随机排序的coll)
+(repeatedly 5 (partial shuffle [1 2 3]))
+
+;;///reverse -> (reverse coll)
+;;Returns a seq of the items in coll in reverse order. Not lazy.
+(reverse '(1 2 3))
+
+;;/// sort -> (sort coll)(sort comp coll)
+;;Returns a sorted sequence of the items in coll. If no comparator is supplied, uses compare.
+;;comparator must implement java.util.Comparator.
+;;Guaranteed to be stable: equal elements will not be reordered.
+;;If coll is a Java array, it will be modified.To avoid this, sort a copy of the array.
+;;按照一定的比较规则comp对coll进行排序
+;;① 返回一个 sorted seq，如果没有比较器comp，则使用compare
+;;② comp必须实现java.util.Comparator接口
+;;③ 如果coll是一个java array，使用seq排序后会改变原有的数据顺序
+(sort > (vals {:foo 5, :bar 2, :baz 10}))
+(sort #(compare (last %1) (last %2)) {:b 1 :c 3 :a  2})
+;;use sort-by instead
+(sort-by last {:b 1 :c 3 :a 2})
+
+;;解决方案
+(def x (to-array [32 -5 4 11]))
+(def y (sort (aclone x)))
+
+
+;;sort-by -> (sort-by keyfn coll)(sort-by keyfn comp coll)
+;;Returns a sorted sequence of the items in coll, where the sort order is determined by comparing (keyfn item).
+;;If no comparator is supplied, uses compare.  comparator must implement java.util.Comparator.
+;;Guaranteed to be stable: equal elements will not be reordered.
+;;If coll is a Java array, it will be modified. To avoid this, sort a copy of the array.
+;keyfun -> 取键值函数   comp -> 比较函数   先去键值 再按照键值进行比较
+(sort-by count ["aaa" "bb" "c"])
+
+(sort-by first [[1 2] [2 2] [2 3]])
+(sort-by first > [[1 2] [2 2] [2 3]])
+
+;;/// compare -> (compare x y)
+;;Comparator. Returns a negative number, zero, or a positive number when x is logically 'less than', 'equal to' or
+;;'greater than' y.
+
+;;Same as Java x.compareTo(y) except it also works for nil, and compares numbers and collections in a type-independent
+;;manner.x must implement Comparable
+
+;;x 是否 大于 y ：① 是 -> 1 ② 小于 -> -1 ③ 等于 -> 0
+;;Coll1 [ce11 ce12 ce13 ... ce1n]   Coll2 [ce21 ce22 ce23 ... ce2n]
+;;【当元素都是数字时】
+;;Coll1中的每个元素是否大于Coll2中的每个元素：
+;;ce1n > ce2n  结果是 1    ce1n < ce2n  结果是 -1   ce1n = ce2n 结果是 0
+;;将每个元素的比较结果累加就是最终的结果
+;;【当元素都是符串时】
+;;string comparisons give results of the distance between the first drifferent characters
+;;返回的结果是两个比较字符串第一个不同字符间的距离
+(compare 1 0) ;; => 1
+(compare 1 1) ;; => 0
+(compare 1 2) ;; => -1
+(compare 1 3) ;; => -1
+
+(compare "B" "A") ;; => 1
+(compare "B" "B") ;; => 0
+(compare "B" "C") ;; => -1
+(compare "AA" "ZZ") ;; => -25
+
+(compare [0 1 2] [0 1 2]);;=> 0
+(compare [1 2 3] [0 1 2 3]);;=> -1
+(compare [0 1 2] [3 4]);; => 1
+(compare nil [1 2 3]);;=> -1
+(compare [1 2 3] nil);;=> 1
+(compare [2 11] [99 1]);;=> -1
+(compare "abc" "def");;=> -3
+(compare "abc" "abd");;=> -1
+
+;;/// map -> (map f) (map f coll) (map f c1 c2) (map f c1 c2 c3) (map f c1 c2 c3 & colls)
+;;Returns a lazy sequence consisting of the result of applying f to the set of first items of each coll,
+;;followed by applying f to the set of second items in each coll, until any one of the colls is exhausted.
+;;Any remaining items in other colls are ignored. Function f should accept number-of-colls arguments.
+;;Returns a transducer when no collection is provided.
+;;① 接受一个函数、一个或者多个集合作为参数，返回一个惰性序列。返回的序列是把这个函数应用到所有集合对应元素所得的一个序列。
+;;② 如果没有coll，则返回一个transducer
+(map inc [1 2 3 4 5])
+(map + [1 2 3] [4 5 6]);;=> (5 7 9)
+;;如果多个coll长度不一，以第一个coll的长度为准
+(map + [1 2 3] [1 2 3 4 5]);;=> (2 4 6)
+(map + [1 2 3] (iterate inc 1));;=> (2 4 6)
+
+
+
+
+
+
+
+
