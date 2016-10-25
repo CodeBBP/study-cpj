@@ -234,7 +234,7 @@
 (flatten {:name "Hubert" :age 23})
 (flatten (seq {:name "Hubert" :age 23}))
 
-;;//group-by -> (group-by f coll) 返回一个map
+;;///group-by -> (group-by f coll) 返回一个map
 ;;Returns a map of the elements of coll keyed by the result of f on each element.
 ;;The value at each key will be a vector of the corresponding elements,
 ;;in the order they appeared in coll.
@@ -248,3 +248,22 @@
 
 (def words ["Air" "Bud" "Cup" "Awake" "Break" "Chunk" "Ant" "Big" "Check"])
 (group-by (juxt first count) words)
+;;///partition -> (partition n coll)(partition n step coll)(partition n step pad coll)
+;;Returns a lazy sequence of lists of n items each, at offsets stepapart.
+;;If step is not supplied, defaults to n, i.e. the partitions do not overlap.
+;;If a pad collection is supplied, use its elements as necessary to complete last partition upto n items.
+;;In case there are not enough padding elements, return a partition with less than n items.
+;;① 返回一个序列 ② 如果step没有，则默认是n，提供step，则会以step为步长将coll进行划分
+;;③ 提供pad，补全剩下元素构成一个完整的partition ④ 没有足够的pad元素，则最后一个parttion的长度会比其他的短
+(partition 5 2 (range 20))
+(partition 4 6 (range 20))
+(partition 4 3 (range 20))
+(partition 3 (range 10));;最后两个元素不能组成一个完整的partition，做删除处理
+(partition 3 3 '("pad") (range 20));;
+(partition 4 3 '("pad" "pad1" "pad2") (range 20));;
+;; when a pad is supplied, the last partition may not be of the same size as the rest
+(partition 4 6 ["a"] (range 20));;=> ((0 1 2 3) (6 7 8 9) (12 13 14 15) (18 19 "a"))
+(partition 4 4 ["pad"] (range 10))
+
+;;partition-all ->  (partition-all n)(partition-all n coll)(partition-all n step coll)
+;;Returns a lazy sequence of lists like partition, but may include partitions with fewer than n items at the end.
