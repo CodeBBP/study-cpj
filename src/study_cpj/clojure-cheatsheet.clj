@@ -5,22 +5,22 @@
 ;;///format -> 使用java.lang.String.format 进行格式化
 (format "Hello there, %s" "bob")
 (format "%5d" 3)
-(format "Pad with leading zeros %02d" 5);;用0补全位数
-(format "Left justified :%7d||" 4);;默认为右向
-(format "Left justified :%-7d||" 4);;加“—”为左向
-(format "Locale-specific group separators %,d" 123456789);;数字分割
-(format "decimal %d  octal %o  hex %x  upper-case hex %X" 63 63 63 63);;进值转换 十进制 八进制 十六进制
-(format "%3$s  %2$d %1$s" "hello" 23  "Positional arguments");;字符到序格式化
+(format "Pad with leading zeros %02d" 5)                    ;;用0补全位数
+(format "Left justified :%7d||" 4)                          ;;默认为右向
+(format "Left justified :%-7d||" 4)                         ;;加“—”为左向
+(format "Locale-specific group separators %,d" 123456789)   ;;数字分割
+(format "decimal %d  octal %o  hex %x  upper-case hex %X" 63 63 63 63) ;;进值转换 十进制 八进制 十六进制
+(format "%3$s  %2$d %1$s" "hello" 23 "Positional arguments") ;;字符到序格式化
 
 ;;///count -> 计算字符串长度
 (count "string")
-(count []);;计算的是coll中的元素个数
+(count [])                                                  ;;计算的是coll中的元素个数
 (count [1 2 3 "123"])
-(count {:one 1 :two 2});;当计算map中元素的个数时，计算的是map中键值对各个数
+(count {:one 1 :two 2})                                     ;;当计算map中元素的个数时，计算的是map中键值对各个数
 
 ;;///get
-(get [4 5 6] 1) ;;当是vector时，通过位置确定元素值
-(get {:key1 "bbp" :key2 32} :key2);;当是map时，通过关键字取值
+(get [4 5 6] 1)                                             ;;当是vector时，通过位置确定元素值
+(get {:key1 "bbp" :key2 32} :key2)                          ;;当是map时，通过关键字取值
 
 ;;///subs
 (subs "Clojure" 1)
@@ -43,14 +43,14 @@
 ;;///split-lines  以\n 或者\r\n分割字符串
 (clojure.string/split-lines "test \n string")
 
-(peek [1 2 3 4]) ;; ->  (last [1 2 3 4])
-(peek '(1 2 3 4));; -> (firet '(1 2 3 4))
+(peek [1 2 3 4])                                            ;; ->  (last [1 2 3 4])
+(peek '(1 2 3 4))                                           ;; -> (firet '(1 2 3 4))
 
 ;;==========================Queues=======================
 ;;/// join -> (join xrel yrel)(join xrel yrel km)
 (def man #{{:id "1001" :name "bbp"} {:id "1002" :name "bbc"}})
 (def sex #{{:id "1001" :sex "man"} {:id "1002" :gender "felman"}})
-(clojure.set/join man sex);;连接多个有相同key值的map时，会将有相同key值的map元素进行连接
+(clojure.set/join man sex)                                  ;;连接多个有相同key值的map时，会将有相同key值的map元素进行连接
 
 ;;/// clojure.set/select -> (select pred xset) 返回含有符合谓词条件的set中的元素set
 (clojure.set/select odd? #{1 2 3})
@@ -60,28 +60,28 @@
 
 ;;======================== Sequences ===============================
 (seq [1 2])
-(seq {:key1 "value1" :key2 "value2"}) ;;=> ([:key2 "value 2"] [:key1 "value 1"])
+(seq {:key1 "value1" :key2 "value2"})                       ;;=> ([:key2 "value 2"] [:key1 "value 1"])
 
-(rseq [1 2 4 3]);;=> [3 4 1 2] 只是元素的位置发生反转，并非是按照值的大小进行排序
+(rseq [1 2 4 3])                                            ;;=> [3 4 1 2] 只是元素的位置发生反转，并非是按照值的大小进行排序
 ;;(resq ["b" "c" "d" "a"]) 字符串元素的vector不可以作为参数
 (rseq (vec (range 1 10)))
-(rseq (into (sorted-map){:a 1 :b 2}))
+(rseq (into (sorted-map) {:a 1 :b 2}))
 
 ;;/// subseq -> (subseq sc test key)(subseq sc start-test start-key end-test end-key)
 ;;//  sc must be a sorted collection, test(s) one of <, <=, > or >=.
 ;;(subseq [1 2 3 4] > 2) --> vec 不是一个 sorted coll
 (subseq (sorted-set 1 2 3 4) > 2)
 ;;当> < test同事使用时，必须要将 > 放在前面，< 放在后面
-(subseq (sorted-set 1 2 3 4 5 6 7 8 9 0) < 9 > 2);;=> ()
-(subseq (sorted-set 1 2 3 4 5 6 7 8 9 0) > 2 < 9);;=> (3 4 5 6 7 8)
+(subseq (sorted-set 1 2 3 4 5 6 7 8 9 0) < 9 > 2)           ;;=> ()
+(subseq (sorted-set 1 2 3 4 5 6 7 8 9 0) > 2 < 9)           ;;=> (3 4 5 6 7 8)
 
-(rsubseq (sorted-set 1 2 3 4 5) < 3);;功效与使用subseq后再反序结果一样
+(rsubseq (sorted-set 1 2 3 4 5) < 3)                        ;;功效与使用subseq后再反序结果一样
 
 ;;/// iterate -> (iterate f x) f => 以什么样的方式进行迭代  x => 迭代的起始数字
 (take 5 (iterate inc 7))
 (take 5 (iterate (partial + 3) 7))
 (take 10 (iterate (partial * 2) 1))
-(take 200 (map first (iterate (fn [[a b]] [b (+' a b)]) [0 1])));;斐波拉契数列
+(take 200 (map first (iterate (fn [[a b]] [b (+' a b)]) [0 1]))) ;;斐波拉契数列
 
 ;;/// repeat ->(repeat x)(repeat n x) -> Returns a lazy (infinite!, or length n if supplied) sequence of xs.
 (repeat 10 "bbp")
@@ -113,28 +113,28 @@
 
 (keep even? (range 1 10))
 
-(keep #(if (odd? %) %) (range 10));;=> (1 3 5 7 9)
+(keep #(if (odd? %) %) (range 10))                          ;;=> (1 3 5 7 9)
 
-(map #(if (odd? %) %) (range 10));;=> (nil 1 nil 3 nil 5 nil 7 nil 9)
+(map #(if (odd? %) %) (range 10))                           ;;=> (nil 1 nil 3 nil 5 nil 7 nil 9)
 
-(for [ x (range 10) :when (odd? x)] x);;=> (1 3 5 7 9)
+(for [x (range 10) :when (odd? x)] x)                       ;;=> (1 3 5 7 9)
 
-(filter odd? (range 10));;=> (1 3 5 7 9)
+(filter odd? (range 10))                                    ;;=> (1 3 5 7 9)
 
 ;;//// distinct 将coll中的元素去重
 (distinct '(1 2 3 4 4 4 4 5 6 6 1 1 8 8 7))
 
 ;;/// filter (filter pred)(filter pred coll)
 (filter even? (range 10))
-(defn size=1?[x] (= (count x) 1))
-(filter size=1?  ["a" "aa" "b" "n" "f" "lisp" "clojure" "q" ""]);;filter 是返回符合条件的元素组成的seq，对每一个元素操作
-(map size=1?  ["a" "aa" "b" "n" "f" "lisp" "clojure" "q" ""]);;map 是返回函数的结果，对每一个元素操作
+(defn size=1? [x] (= (count x) 1))
+(filter size=1? ["a" "aa" "b" "n" "f" "lisp" "clojure" "q" ""]) ;;filter 是返回符合条件的元素组成的seq，对每一个元素操作
+(map size=1? ["a" "aa" "b" "n" "f" "lisp" "clojure" "q" ""]) ;;map 是返回函数的结果，对每一个元素操作
 
-(def xf (filter odd?));;如果没有传入coll，那么将会产生一个transducer
+(def xf (filter odd?))                                      ;;如果没有传入coll，那么将会产生一个transducer
 (transduce xf conj '(1 2 3 4))
 (transduce xf + '(1 2 3 4))
 
-(filter (comp #{2 3} last) {:x 1 :y 2 :z 3});;filter有和map对每一个元素都进行操作的一样的效果
+(filter (comp #{2 3} last) {:x 1 :y 2 :z 3})                ;;filter有和map对每一个元素都进行操作的一样的效果
 (map first (filter (comp #{2 3} last) {:x 1 :y 2 :z 3}))
 
 ;;///filterv -> (filterv pred coll)
@@ -167,12 +167,12 @@
 
 (def digits (seq [1 2 3]))
 (for [x1 digits x2 digits] (* x1 x2))
-(for [x ['a 'b 'c] y [1 2 3]] [x y]);;有两个绑定参数x,y时，后面的使用函数对x,y同时操作时会产生一中笛卡尔集的效果
+(for [x ['a 'b 'c] y [1 2 3]] [x y])                        ;;有两个绑定参数x,y时，后面的使用函数对x,y同时操作时会产生一中笛卡尔集的效果
 
-(for [[x y] '([:a 1] [:b 2] [:c 0]) :when (= y 0)] x);;操作map，将一个map的键值对绑定到两个参数 x y 实际是将key和value分别绑定到x和y上
+(for [[x y] '([:a 1] [:b 2] [:c 0]) :when (= y 0)] x)       ;;操作map，将一个map的键值对绑定到两个参数 x y 实际是将key和value分别绑定到x和y上
 
 (time (dorun (for [x (range 1000) y (range 10000) :when (> x y)] [x y])))
-(time (dorun (for [x (range 1000) y (range 10000) :while (> x y)] [x y])));;这个例子展示了when和while的区别
+(time (dorun (for [x (range 1000) y (range 10000) :while (> x y)] [x y]))) ;;这个例子展示了when和while的区别
 
 ;;/// cons -> (cons x seq)
 ;; Returns a new seq where x is the first element and seq is the rest.
@@ -183,8 +183,8 @@
 (conj [1 2 3] '(1 2 3))
 (conj [1 2 3] 6 5 4)
 (conj '(4 5 6) 1 2 3)
-(conj {:key2 "value2" :key1 "value1"} [:key4 "value4"]  [:key3 "value3"]);;->like vector
-(conj {:firstname "John" :lastname "Doe"} {:age 25 :nationality "Chinese"});;-> like seq
+(conj {:key2 "value2" :key1 "value1"} [:key4 "value4"] [:key3 "value3"]) ;;->like vector
+(conj {:firstname "John" :lastname "Doe"} {:age 25 :nationality "Chinese"}) ;;-> like seq
 
 ;;///concat -> (concat)(concat x)(concat x y)(concat x y & zs)
 ;;Returns a lazy seq representing the concatenation of the elements in the supplied colls.
@@ -213,7 +213,7 @@
 ;;/// interpose -> (interpose sep)(interpose sep coll)
 ;;Returns a lazy seq of the elements of coll separated by sep.
 ;;Returns a stateful transducer when no collection is provided.
-(apply str  (interpose "," [1 2 3 4]));->(clojure.string/join "," [1 2 3 4])
+(apply str (interpose "," [1 2 3 4]))                       ;->(clojure.string/join "," [1 2 3 4])
 
 ;;/// drop -> (drop n)(drop n coll)
 ;;Returns a lazy sequence of all but the first n items in coll.
@@ -246,7 +246,7 @@
 (flatten [1 [3 2]])
 (flatten '(1 2 [3 (4 5)]))
 (flatten nil)
-(flatten 5);;操作的数据结构不是一个seq，返回空序列()
+(flatten 5)                                                 ;;操作的数据结构不是一个seq，返回空序列()
 (flatten {:name "Hubert" :age 23})
 (flatten (seq {:name "Hubert" :age 23}))
 
@@ -255,7 +255,7 @@
 ;;The value at each key will be a vector of the corresponding elements,
 ;;in the order they appeared in coll.
 ;;返回一个按照键值分组后的map，键值是f作用于组元素中的每个元素的求值结果，值是有一个vector，其元素出现的顺序是按照coll中出现的顺序
-(group-by count ["a" "b" "aa" "aaa" "bbb"]);;按照字符串长度对元素进行分组
+(group-by count ["a" "b" "aa" "aaa" "bbb"])                 ;;按照字符串长度对元素进行分组
 (group-by odd? (range 10))
 
 (group-by :user-id [{:user-id 1 :uri "/"}
@@ -274,11 +274,11 @@
 (partition 5 2 (range 20))
 (partition 4 6 (range 20))
 (partition 4 3 (range 20))
-(partition 3 (range 10));;最后两个元素不能组成一个完整的partition，做删除处理
-(partition 3 3 '("pad") (range 20));;
-(partition 4 3 '("pad" "pad1" "pad2") (range 20));;
+(partition 3 (range 10))                                    ;;最后两个元素不能组成一个完整的partition，做删除处理
+(partition 3 3 '("pad") (range 20))                         ;;
+(partition 4 3 '("pad" "pad1" "pad2") (range 20))           ;;
 ;; when a pad is supplied, the last partition may not be of the same size as the rest
-(partition 4 6 ["a"] (range 20));;=> ((0 1 2 3) (6 7 8 9) (12 13 14 15) (18 19 "a"))
+(partition 4 6 ["a"] (range 20))                            ;;=> ((0 1 2 3) (6 7 8 9) (12 13 14 15) (18 19 "a"))
 (partition 4 4 ["pad"] (range 10))
 
 ;;/// partition-all ->  (partition-all n)(partition-all n coll)(partition-all n step coll)
@@ -328,7 +328,7 @@
 ;;② comp必须实现java.util.Comparator接口
 ;;③ 如果coll是一个java array，使用seq排序后会改变原有的数据顺序
 (sort > (vals {:foo 5, :bar 2, :baz 10}))
-(sort #(compare (last %1) (last %2)) {:b 1 :c 3 :a  2})
+(sort #(compare (last %1) (last %2)) {:b 1 :c 3 :a 2})
 ;;use sort-by instead
 (sort-by last {:b 1 :c 3 :a 2})
 
@@ -364,24 +364,24 @@
 ;;【当元素都是符串时】
 ;;string comparisons give results of the distance between the first drifferent characters
 ;;返回的结果是两个比较字符串第一个不同字符间的距离
-(compare 1 0) ;; => 1
-(compare 1 1) ;; => 0
-(compare 1 2) ;; => -1
-(compare 1 3) ;; => -1
+(compare 1 0)                                               ;; => 1
+(compare 1 1)                                               ;; => 0
+(compare 1 2)                                               ;; => -1
+(compare 1 3)                                               ;; => -1
 
-(compare "B" "A") ;; => 1
-(compare "B" "B") ;; => 0
-(compare "B" "C") ;; => -1
-(compare "AA" "ZZ") ;; => -25
+(compare "B" "A")                                           ;; => 1
+(compare "B" "B")                                           ;; => 0
+(compare "B" "C")                                           ;; => -1
+(compare "AA" "ZZ")                                         ;; => -25
 
-(compare [0 1 2] [0 1 2]);;=> 0
-(compare [1 2 3] [0 1 2 3]);;=> -1
-(compare [0 1 2] [3 4]);; => 1
-(compare nil [1 2 3]);;=> -1
-(compare [1 2 3] nil);;=> 1
-(compare [2 11] [99 1]);;=> -1
-(compare "abc" "def");;=> -3
-(compare "abc" "abd");;=> -1
+(compare [0 1 2] [0 1 2])                                   ;;=> 0
+(compare [1 2 3] [0 1 2 3])                                 ;;=> -1
+(compare [0 1 2] [3 4])                                     ;; => 1
+(compare nil [1 2 3])                                       ;;=> -1
+(compare [1 2 3] nil)                                       ;;=> 1
+(compare [2 11] [99 1])                                     ;;=> -1
+(compare "abc" "def")                                       ;;=> -3
+(compare "abc" "abd")                                       ;;=> -1
 
 ;;/// map -> (map f) (map f coll) (map f c1 c2) (map f c1 c2 c3) (map f c1 c2 c3 & colls)
 ;;Returns a lazy sequence consisting of the result of applying f to the set of first items of each coll,
@@ -394,10 +394,10 @@
 ;;③ f 必须要能够接受 coll个数 个参数
 ;;④ 如果没有coll，则返回一个transducer
 (map inc [1 2 3 4 5])
-(map + [1 2 3] [4 5 6]);;=> (5 7 9)
+(map + [1 2 3] [4 5 6])                                     ;;=> (5 7 9)
 ;;如果多个coll长度不一，以第一个coll的长度为准
-(map + [1 2 3] [1 2 3 4 5]);;=> (2 4 6)
-(map + [1 2 3] (iterate inc 1));;=> (2 4 6)
+(map + [1 2 3] [1 2 3 4 5])                                 ;;=> (2 4 6)
+(map + [1 2 3] (iterate inc 1))                             ;;=> (2 4 6)
 
 ;;/// pmap -> (pmap f coll) (pmap f coll & colls)
 ;;Like map, except f is applied in parallel. Semi-lazy in that the parallel computation stays ahead of the consumption,
@@ -494,11 +494,11 @@
 (nthnext (range 10) 3)
 ;;【比较drop】，
 ;;看似相同，实则不同：对于获取不了的元素，nthnext返回一个nil，drop返回一个（）
-(nthnext (range 10) 5)   ;;=> (5 6 7 8 9)
-(drop    5 (range 10))   ;;=> (5 6 7 8 9)
+(nthnext (range 10) 5)                                      ;;=> (5 6 7 8 9)
+(drop 5 (range 10))                                         ;;=> (5 6 7 8 9)
 
-(nthnext [] 3)  ;;=> nil
-(drop    3 [])  ;;=> ()   ; a lazy sequence
+(nthnext [] 3)                                              ;;=> nil
+(drop 3 [])                                                 ;;=> ()   ; a lazy sequence
 
 ;;/// rand-nth ->  (rand-nth coll)
 ;;Return a random element of the (sequential) collection. 随机返回coll中的元素
@@ -539,13 +539,13 @@
 ;;/// into -> (into to from) (into to xform from)
 ;;Returns a new coll consisting of to-coll with all of the items of from-coll conjoined. A transducer may be supplied.
 ;;返回一个由from-coll中的item（元素）组成一个to-coll的coll，可以使用transducer
-(into (sorted-map) [ [:a 1] [:c 3] [:b 2] ] )               ;; =>{:a 1, :b 2, :c 3}
-(into (sorted-map) [ {:a 1} {:c 3} {:b 2} ] )               ;; =>{:a 1, :b 2, :c 3}
+(into (sorted-map) [[:a 1] [:c 3] [:b 2]])                  ;; =>{:a 1, :b 2, :c 3}
+(into (sorted-map) [{:a 1} {:c 3} {:b 2}])                  ;; =>{:a 1, :b 2, :c 3}
 (into [] {1 2, 3 4})                                        ;; =>[[1 2] [3 4]]
 (into () '(1 2 3))                                          ;; =>(3 2 1)
 (into [1 2 3] '(4 5 6))                                     ;; =>[1 2 3 4 5 6]
 
-(def xform (comp (map #(+ 2 %)) (filter odd?) ))
+(def xform (comp (map #(+ 2 %)) (filter odd?)))
 (into [-1 -2] xform (range 10))
 ;;或者
 (transduce xform conj [-1 -2] (range 10))
@@ -569,12 +569,12 @@
 ;;④ 如果coll只有一个元素，那么reduce返回的结果就是coll中的那个元素，此时 f 不会被调用
 ;;⑤ 如果初始值被提供，返回的结果就是将 f 应用到 val 和coll中第一个元素，...... 直到coll中没有元素
 ;;④ 如果提供了val，并且coll为空集合，那么会直接返回val，f 不会被调用
-(reduce + [1 2 3 4 5])  ;;=> 15
-(reduce + [])           ;;=> 0
-(reduce + [1])          ;;=> 1
-(reduce + [1 2])        ;;=> 3
-(reduce + 1 [])         ;;=> 1
-(reduce + 1 [2 3])      ;;=> 6
+(reduce + [1 2 3 4 5])                                      ;;=> 15
+(reduce + [])                                               ;;=> 0
+(reduce + [1])                                              ;;=> 1
+(reduce + [1 2])                                            ;;=> 3
+(reduce + 1 [])                                             ;;=> 1
+(reduce + 1 [2 3])                                          ;;=> 6
 
 ;;///reductions -> (reductions f coll)(reductions f init coll
 ;;Returns a lazy seq of the intermediate values of the reduction (as per reduce) of coll by f, starting with init.
@@ -590,27 +590,31 @@
 ;;(map vector [:a :b] [:c :d])
 ;;在这个例子中，map是f，vector 是f的参数，[:a :b][:c :d] 是参数vector的参数列表，这个例子与(map vector [:a :b] [:c :d])等价
 (apply map vector [[:a :b] [:c :d]])                        ;; => ([:a :c] [:b :d])
+
 ;; only functions can be used with apply.  'and' is a macro because it needs to evaluate its arguments lazily and so
 ;; does not work with apply.
 ;;只有函数才能够被用于apply。‘and’是宏，它会对参数进行懒求值，所以不能被用于apply
-(apply and (list true true false true)                     ;; RuntimeException : cannot take value of a macro
+;;(apply and (list true true false true)                      ;; RuntimeException : cannot take value of a macro
 
-;; 'apply' is used to apply an operator to its operands.
+;; 'apply' is used to apply an operator to its operands. 'apply' 被用于将操作对象应用到它的操作域中
 (apply + '(1 2))  ; equivalent to (+ 1 2)
+;; You can also put operands before the list of operands and they'll be consumed in the list of operands
+;; 也可以放一些操作数放在操作域列表前，操作数和原有的操作域将共同组成一个操作域
+(apply + 1 2 '(3 4))  ; equivalent to (apply + '(1 2 3 4))
 
 
 ;;///set -> (set coll)
 ;;Returns a set of the distinct elements of coll.
 ;;返回一个将coll中元素 去重 的set
-(set '(1 1 2 3 2 4 5 5))                                    ;;=> #{1 2 3 4 5}
-(set nil)                                                   ;;=> #{}
+(set '(1 1 2 3 2 4 5 5))                             ;;=> #{1 2 3 4 5}
+(set nil)                                            ;;=> #{}
 
 ;;///vec -> (vec coll)
 ;;Creates a new vector containing the contents of coll. Java arrays will be aliased and should not be modified.
 ;;使用coll中的元素创建一个新的vector
-(vec '(1 2 3))                                              ;;=> [1 2 3]
-(vec '())                                                   ;;=> []
-(vec nil)                                                   ;;=> []
+(vec '(1 2 3))                                       ;;=> [1 2 3]
+(vec '())                                            ;;=> []
+(vec nil)                                            ;;=> []
 
 ;;///into-array -> (into-array aseq) (into-array type aseq)
 ;;Returns an array with components set to the values in aseq.
@@ -620,10 +624,9 @@
 ;;① 返回一个由 aseq 中元素组成的 array
 ;;② 数组中元素的类型的定义是这样的：a) 可以指定类型  b) 如果aseq不为空，则以aseq中第一个元素的类型为array中元素的类型(aseq中的元素类型要相同，不然会报出异常)
 ;; c) 当aseq中元素类型不一致时，也可以指定成Object
-(into-array [2 "4" "8" 5])                                  ;;报出异常
-(into-array Object [2 "4" "8" 5])                           ;;#<Object[] [Ljava.lang.Object;@3aa6d0a4>
-(into-array (range 4))                                      ;;#<Integer[] [Ljava.lang.Integer;@63d6dc46>
-
+(into-array [2 "4" "8" 5])                           ;;报出异常
+(into-array Object [2 "4" "8" 5])                    ;;#<Object[] [Ljava.lang.Object;@3aa6d0a4>
+(into-array (range 4))                               ;;#<Integer[] [Ljava.lang.Integer;@63d6dc46>
 (into-array Byte/TYPE (range 4))
 
 
