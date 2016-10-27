@@ -583,6 +583,22 @@
 (reductions + [1 2 3])                                      ;;=> (1 3 6)
 (reductions + 3 [1 2 3])                                    ;;=> (3 4 6 9)
 
+;;///apply -> (apply f args) (apply f x args) (apply f x y args) (apply f x y z args) (apply f a b c d & args)
+;;Applies fn f to the argument list formed by prepending intervening arguments to args.
+
+;;In this example, 'f' = 'map', 'args' = 'vector', and argseq = '[:a :b] [:c :d]', making the above code equivalent to
+;;(map vector [:a :b] [:c :d])
+;;在这个例子中，map是f，vector 是f的参数，[:a :b][:c :d] 是参数vector的参数列表，这个例子与(map vector [:a :b] [:c :d])等价
+(apply map vector [[:a :b] [:c :d]])                        ;; => ([:a :c] [:b :d])
+;; only functions can be used with apply.  'and' is a macro because it needs to evaluate its arguments lazily and so
+;; does not work with apply.
+;;只有函数才能够被用于apply。‘and’是宏，它会对参数进行懒求值，所以不能被用于apply
+(apply and (list true true false true)                     ;; RuntimeException : cannot take value of a macro
+
+;; 'apply' is used to apply an operator to its operands.
+(apply + '(1 2))  ; equivalent to (+ 1 2)
+
+
 ;;///set -> (set coll)
 ;;Returns a set of the distinct elements of coll.
 ;;返回一个将coll中元素 去重 的set
