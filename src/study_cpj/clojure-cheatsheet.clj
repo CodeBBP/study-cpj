@@ -102,6 +102,13 @@
 ;;rdr must implement java.io.BufferedReader.
 (with-open [rdr (clojure.java.io/reader "E:\\dir\\dir.txt")] (count (line-seq rdr)))
 
+;;/// tree-seq -> (tree-seq branch? children root)
+;;Returns a lazy sequence of the nodes in a tree, via a depth-first walk.
+;;branch? must be a fn of one arg that returns true if passed a node that can have children (but may not).
+;;children must be a fn of one arg that returns a sequence of the children.
+;;Will only be called on nodes for which branch? returns true.
+;;Root is the root node of thetree.
+;;通过深度优先算法返回一个树种节点组成的惰性序列
 (tree-seq seq? identity '((1 2 (3)) (4)))
 
 (keep even? (range 1 10))
@@ -130,6 +137,11 @@
 (filter (comp #{2 3} last) {:x 1 :y 2 :z 3});;filter有和map对每一个元素都进行操作的一样的效果
 (map first (filter (comp #{2 3} last) {:x 1 :y 2 :z 3}))
 
+;;///filterv -> (filterv pred coll)
+;;Returns a vector of the items in coll for which (pred item) returns true. pred must be free of side-effects.
+;;参见filter，不同是返回的结果为一个vector
+(filterv even? (range 10))                                  ;;=> [0 2 4 6 8]
+
 ;;/// remove -> (remove pred)(remove pred coll) => 没有提供coll时，返回一个转换器
 ;;==》包含了filter的功能，并在此基础上执行移除操作，并返回移除符合pred元素后的seq
 (remove pos? [1 -2 2 -1 3 7 0])
@@ -139,10 +151,14 @@
 (take-nth 10 (range 100))
 (take-nth 5 "abcdefghijklmnopqrstuvwxyz")
 
-;;/// for
-;;  Supported modifiers are: :let [binding-form expr ...],:while test, :when test.
-;;  (take 100 (for [x (range 100000000) y (range 1000000) :while (< y x)] [x y]))
-;; 【whiel和when的区别】when -> :when 不会阻止循环提前结束。但是:while就不同了，如果:while(...) 计算出结果为false，则当前循环立刻退出
+;;/// for -> (for seq-exprs body-expr)
+;;List comprehension. Takes a vector of one or more binding-form/collection-expr pairs, each followed by zero or more
+;;modifiers, and yields a lazy sequence of evaluations of expr.
+;;Collections are iterated in a nested fashion, rightmost fastest,and nested coll-exprs can refer to bindings created
+;;in prior binding-forms.
+;;Supported modifiers are: :let [binding-form expr ...],:while test, :when test.
+;;(take 100 (for [x (range 100000000) y (range 1000000) :while (< y x)] [x y]))
+;;【whiel和when的区别】when -> :when 不会阻止循环提前结束。但是:while就不同了，如果:while(...) 计算出结果为false，则当前循环立刻退出
 (for [x [0 1 2 3 4 5]
       :let [y (* x 3)]
       :let [z (/ y 3)]
@@ -370,20 +386,229 @@
 ;;/// map -> (map f) (map f coll) (map f c1 c2) (map f c1 c2 c3) (map f c1 c2 c3 & colls)
 ;;Returns a lazy sequence consisting of the result of applying f to the set of first items of each coll,
 ;;followed by applying f to the set of second items in each coll, until any one of the colls is exhausted.
-;;Any remaining items in other colls are ignored. Function f should accept number-of-colls arguments.
+;;Any remaining items in other colls are ignored.
+;;Function f should accept number-of-colls arguments.
 ;;Returns a transducer when no collection is provided.
-;;① 接受一个函数、一个或者多个集合作为参数，返回一个惰性序列。返回的序列是把这个函数应用到所有集合对应元素所得的一个序列。
-;;② 如果没有coll，则返回一个transducer
+;;① 接受一个函数、一个或者多个集合作为参数，返回一个惰性序列。返回的序列是把这个函数应用到所有集合中对应元素所得的一个序列。
+;;② 当coll的长度不一致时，以最短的为准
+;;③ f 必须要能够接受 coll个数 个参数
+;;④ 如果没有coll，则返回一个transducer
 (map inc [1 2 3 4 5])
 (map + [1 2 3] [4 5 6]);;=> (5 7 9)
 ;;如果多个coll长度不一，以第一个coll的长度为准
 (map + [1 2 3] [1 2 3 4 5]);;=> (2 4 6)
 (map + [1 2 3] (iterate inc 1));;=> (2 4 6)
 
+;;/// pmap -> (pmap f coll) (pmap f coll & colls)
+;;Like map, except f is applied in parallel. Semi-lazy in that the parallel computation stays ahead of the consumption,
+;;but doesn't realize the entire result unless required.
+;;Only useful for computationally intensive functions where the time of f dominates the coordination overhead.
+;;参见map，但是效率要高于map
+(pmap inc [1 2 3 4 5])                                      ;;=> (2 3 4 5 6)
+
+;;/// map-indexed -> (map-indexed f) (map-indexed f coll)
+;;Returns a lazy sequence consisting of the result of applying f to 0 and the first item of coll,
+;;followed by applying f to 1 and the second item in coll, etc, until coll is exhausted.
+;;Thus function f should accept 2 arguments, index and item.
+;;Returns a stateful transducer when no collection is provided.
+;;返回值是将f应用到coll中的第一个参数和0，第二个参数和1 ...... 第n个参数和n形成的惰性序列
+;;map-indexed 的参数 f 应该包含两个参数=> index 和 item.
+(map-indexed (fn [idx itm] [idx itm]) "foobar")             ;;=> ([0 \f] [1 \o] [2 \o] [3 \b] [4 \a] [5 \r])
+(map-indexed vector "foobar")                               ;;=> ([0 \f] [1 \o] [2 \o] [3 \b] [4 \a] [5 \r])
+
+;;/// mapcat -> (mapcat f) (mapcat f & colls)
+;;Returns the result of applying concat to the result of applying map to f and colls.
+;;Thus function f should return a collection.
+;;Returns a transducer when no collections are provided
+;;mapcat的返回值是 先对coll继续 map f ，得出结果 x，然后将concat应用到 x
+(mapcat reverse [[3 2 1 0] [6 5 4] [9 8 7]])
+;;与下面的等价
+(apply concat (map reverse [[3 2 1 0] [6 5 4] [9 8 7]]))
+
+;;///mapv -> (mapv f coll)  (mapv f c1 c2)  (mapv f c1 c2 c3)  (mapv f c1 c2 c3 & colls)
+;;Returns a vector consisting of the result of applying f to the set of first items of each coll,
+;;followed by applying f to the set of second items in each coll, until any one of the colls is exhausted.
+;;Any remaining items in other colls are ignored. Function f should accept number-of-colls arguments.
+;;参见map，不同点是返回结果是一个vector
+(mapv + [1 2 3] [4 5 6])                                    ;;=> [5 7 9]
+
+;;/// seque -> (seque s) (seque n-or-q s)
+;;Creates a queued seq on another (presumably lazy) seq s.
+;;The queued seq will produce a concrete seq in the background, and can get up to n items ahead of the consumer.
+;;n-or-q can be an integer n buffer size, or an instance of java.util.concurrent BlockingQueue.
+;;Note that reading from a seque can block if the reader gets ahead of the producer.
+
+;;;/// first -> (first coll)
+;;Returns the first item in the collection.
+;;Calls seq on its argument. If coll is nil, returns nil.
+(first '(:alpha :bravo :charlie))                           ;;=> :alpha
+(first nil)                                                 ;;=> nil
+(first [])                                                  ;;=> nil
+
+;;/// ffirst -> (ffirst x)
+;;Same as (first (first x))
+(ffirst ['(a b c) '(b a c)])                                ;;=> a
+
+;;/// nfirst -> (nfirst x)
+;;Same as (next (first x))
+(nfirst ['(a b c) '(b a c)])                                ;;=> (b c)
+
+;;/// fnext -> (fnext x)
+;;Same as (first (next x))
+(fnext ['(a b c) '(b a c)])                                 ;;=>((b a c))
+
+;;/// nnext -> (nnext x)
+;;Same as (next (next x))
+(nnext '(1 2 3))                                            ;;=> (3)
+
+;;/// second -> (second x)
+;;Same as (first (next x))
+(second '(:alpha :bravo :charlie))                          ;;=> :bravo
+(second nil)                                                ;;=> nil
+(second [])                                                 ;;=> nil
+
+;;last -> (last coll)
+;;Return the last item in coll, in linear time
+(last [1 2 3 4 5])                                          ;;=> 5
+(last ["a" "b" "c" "d" "e"])                                ;;=> "e"
+(last {:one 1 :two 2 :three 3})                             ;;=> [:three 3]
+;; but be careful with what you expect from a map (or set)
+;;原因是map和set是无序的
+(last {:a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9})       ;;=> [:a 1]
+(last (sorted-map :a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9)) ;;=> [:i 9]
+
+;;;/// nth -> (nth coll index)(nth coll index not-found)
+;;Returns the value at the index.
+;;get returns nil if index out of bounds,nth throws an exception unless not-found is supplied.
+;;nth also works for strings, Java arrays, regex Matchers and Lists, and, in O(n) time, for sequences.
+(def my-seq ["a" "b" "c" "d"])
+(nth my-seq 0)                                              ;; => "a"
+(nth my-seq 1)                                              ;; => "b"
+
+(nth [] 0)                                                  ;; => 异常
+(nth [] 0 "nothing found")                                  ;; => "nothing found"
+
+;;/// nthnext -> (nthnext coll n)
+;;Returns the nth next of coll, (seq coll) when n is 0.
+;;从第n位开始获取coll中的元素
+(nthnext (range 10) 3)
+;;【比较drop】，
+;;看似相同，实则不同：对于获取不了的元素，nthnext返回一个nil，drop返回一个（）
+(nthnext (range 10) 5)   ;;=> (5 6 7 8 9)
+(drop    5 (range 10))   ;;=> (5 6 7 8 9)
+
+(nthnext [] 3)  ;;=> nil
+(drop    3 [])  ;;=> ()   ; a lazy sequence
+
+;;/// rand-nth ->  (rand-nth coll)
+;;Return a random element of the (sequential) collection. 随机返回coll中的元素
+;;Will have the same performance characteristics as nth for the given collection.
+(def food [:ice-cream :steak :apple])
+(rand-nth [1 2 3 4 5])                                      ;;每次执行都是随机返回vector中的一个元素
 
 
+;;/// when-first -> (when-first bindings & body)
+;;bindings => x xs
+;;Roughly the same as (when (seq xs) (let [x (first xs)] body)) but xs is evaluated only once
+;;let的一个语法糖，当xs是一个空的coll时，不进行绑定，返回nil；当xs不为空时，取出xs的第一个元素并绑定到x
+(when-first [a [1 2 3]] a)                                  ;; => 1
+(when-first [a []] a)                                       ;; => nil
 
 
+;;/// max-key -> (max-key k x) (max-key k x y) (max-key k x y & more)
+;;Returns the x for which (k x), a number, is greatest.
+;;将 x y z ... 代入到函数k中求值，返回x y z ... 求值结果最大的一个
+;;求值的结果必须是数值！！！
+(max-key count "asd" "bsd" "dsd" "long word")               ;;"long word"
+(max-key #(+ % 1) 1 2 3 8 4 5)
+(key (apply max-key val {:a 3 :b 7 :c 9 :d 9}))             ;;当相同，后面的会覆盖前面的
+
+;; min-key -> (min-key k x) (min-key k x y) (min-key k x y & more)
+;;Returns the x for which (k x), a number, is least.
+;;参见max-key
+(min-key count "asd" "bsd" "dsd" "long word")
+
+;;/// zipmap -> (zipmap keys vals)
+;;Returns a map with the keys mapped to the corresponding vals.
+;;将键值map到相应的值
+(zipmap [:a :b :c :d :e] [1 2 3 4 5])
+;;当key-vey 长度不一时，以短的为准
+(zipmap [:a :b :c] [1 2])                                   ;; =>{:a 1, :b 2}
+(zipmap [:a :b :c] (range 10))                              ;; => {:a 0, :b 1, :c 2}
+
+;;/// into -> (into to from) (into to xform from)
+;;Returns a new coll consisting of to-coll with all of the items of from-coll conjoined. A transducer may be supplied.
+;;返回一个由from-coll中的item（元素）组成一个to-coll的coll，可以使用transducer
+(into (sorted-map) [ [:a 1] [:c 3] [:b 2] ] )               ;; =>{:a 1, :b 2, :c 3}
+(into (sorted-map) [ {:a 1} {:c 3} {:b 2} ] )               ;; =>{:a 1, :b 2, :c 3}
+(into [] {1 2, 3 4})                                        ;; =>[[1 2] [3 4]]
+(into () '(1 2 3))                                          ;; =>(3 2 1)
+(into [1 2 3] '(4 5 6))                                     ;; =>[1 2 3 4 5 6]
+
+(def xform (comp (map #(+ 2 %)) (filter odd?) ))
+(into [-1 -2] xform (range 10))
+;;或者
+(transduce xform conj [-1 -2] (range 10))
+;;或者
+(reduce conj [-1 -2] (->> (range 10) (map #(+ 2 %)) (filter odd?)))
+;;【说明】into 的效率要高于后两种写法，具体测试方法参见 http://clojuredocs.org/clojure.core/into
+
+;;/// reduce ->　(reduce f coll)　(reduce f val coll)
+;;f should be a function of 2 arguments.
+;;If val is not supplied,returns the result of applying f to the first 2 items in coll,
+;;then applying f to that result and the 3rd item, etc.
+;;If coll contains no items, f must accept no arguments as well, and reduce returns the result of calling f with no arguments.
+;;If coll has only 1 item, it is returned and f is not called.
+;;If val is supplied, returns the result of applying f to val and the first item in coll,
+;;then applying f to that result and the 2nd item, etc.
+;;If val is supplied and coll contains no items, returns val and f is not called.
+;;① f 必须是一个可以接受两个参数的函数
+;;② 如果val（初始值）没有被提供，返回将 f 应用于coll中前两个元素，得到值 x，然后再将 f 应用到 x 和coll中的第三个元素 ... 直到coll
+;;中的最后一个元素
+;;③ 如果coll是一个空集合，要求 f 必须可以接受无参，返回的结果是 f 对无参求值的结果
+;;④ 如果coll只有一个元素，那么reduce返回的结果就是coll中的那个元素，此时 f 不会被调用
+;;⑤ 如果初始值被提供，返回的结果就是将 f 应用到 val 和coll中第一个元素，...... 直到coll中没有元素
+;;④ 如果提供了val，并且coll为空集合，那么会直接返回val，f 不会被调用
+(reduce + [1 2 3 4 5])  ;;=> 15
+(reduce + [])           ;;=> 0
+(reduce + [1])          ;;=> 1
+(reduce + [1 2])        ;;=> 3
+(reduce + 1 [])         ;;=> 1
+(reduce + 1 [2 3])      ;;=> 6
+
+;;///reductions -> (reductions f coll)(reductions f init coll
+;;Returns a lazy seq of the intermediate values of the reduction (as per reduce) of coll by f, starting with init.
+;;返回一个由ruduce f coll 的中间值组成的惰性序列，如果有初始值，则返回的序列的第一个元素是初始值
+(reductions + [1 1 1 1])                                    ;;=> (1 2 3 4)
+(reductions + [1 2 3])                                      ;;=> (1 3 6)
+(reductions + 3 [1 2 3])                                    ;;=> (3 4 6 9)
+
+;;///set -> (set coll)
+;;Returns a set of the distinct elements of coll.
+;;返回一个将coll中元素 去重 的set
+(set '(1 1 2 3 2 4 5 5))                                    ;;=> #{1 2 3 4 5}
+(set nil)                                                   ;;=> #{}
+
+;;///vec -> (vec coll)
+;;Creates a new vector containing the contents of coll. Java arrays will be aliased and should not be modified.
+;;使用coll中的元素创建一个新的vector
+(vec '(1 2 3))                                              ;;=> [1 2 3]
+(vec '())                                                   ;;=> []
+(vec nil)                                                   ;;=> []
+
+;;///into-array -> (into-array aseq) (into-array type aseq)
+;;Returns an array with components set to the values in aseq.
+;;The array's component type is type if provided, or the type of the first value in aseq if present, or Object.
+;;All values in aseq must be compatible with the component type.
+;;Class objects for the primitive types can be obtained using, e.g., Integer/TYPE.
+;;① 返回一个由 aseq 中元素组成的 array
+;;② 数组中元素的类型的定义是这样的：a) 可以指定类型  b) 如果aseq不为空，则以aseq中第一个元素的类型为array中元素的类型(aseq中的元素类型要相同，不然会报出异常)
+;; c) 当aseq中元素类型不一致时，也可以指定成Object
+(into-array [2 "4" "8" 5])                                  ;;报出异常
+(into-array Object [2 "4" "8" 5])                           ;;#<Object[] [Ljava.lang.Object;@3aa6d0a4>
+(into-array (range 4))                                      ;;#<Integer[] [Ljava.lang.Integer;@63d6dc46>
+
+(into-array Byte/TYPE (range 4))
 
 
 
