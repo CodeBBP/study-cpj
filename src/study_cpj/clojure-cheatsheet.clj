@@ -1,6 +1,6 @@
 (ns study_cpj.sheet)
 
-;;============Strings=====================
+;;||||||||||||||||||||||||||||||||||||||||||||||   Strings 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 ;;///format -> 使用java.lang.String.format 进行格式化
 (format "Hello there, %s" "bob")
@@ -45,8 +45,12 @@
 
 (peek [1 2 3 4])                                            ;; ->  (last [1 2 3 4])
 (peek '(1 2 3 4))                                           ;; -> (firet '(1 2 3 4))
+;;||||||||||||||||||||||||||||||||||||||||||||||   Strings 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-;;==========================Queues=======================
+
+
+;;||||||||||||||||||||||||||||||||||||||||||||||   Queues 开始   |||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
 ;;/// join -> (join xrel yrel)(join xrel yrel km)
 (def man #{{:id "1001" :name "bbp"} {:id "1002" :name "bbc"}})
 (def sex #{{:id "1001" :sex "man"} {:id "1002" :gender "felman"}})
@@ -57,8 +61,11 @@
 
 ;;///clojure.set/project -> 按照key返回set中map元素值
 (clojure.set/project #{{:name "bbp" :age "23"} {:name "bbc" :age "25" :gender "man"}} [:name :gender])
+;;||||||||||||||||||||||||||||||||||||||||||||||   Queues 结束   |||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-;;======================== Sequences ===============================
+
+
+;;||||||||||||||||||||||||||||||||||||||||||||||   Sequences 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||
 (seq [1 2])
 (seq {:key1 "value1" :key2 "value2"})                       ;;=> ([:key2 "value 2"] [:key1 "value 1"])
 
@@ -124,7 +131,7 @@
 ;;//// distinct 将coll中的元素去重
 (distinct '(1 2 3 4 4 4 4 5 6 6 1 1 8 8 7))
 
-;;/// filter (filter pred)(filter pred coll)
+;;/// filter (filter pred) (filter pred coll)
 (filter even? (range 10))
 (defn size=1? [x] (= (count x) 1))
 (filter size=1? ["a" "aa" "b" "n" "f" "lisp" "clojure" "q" ""]) ;;filter 是返回符合条件的元素组成的seq，对每一个元素操作
@@ -173,6 +180,17 @@
 
 (time (dorun (for [x (range 1000) y (range 10000) :when (> x y)] [x y])))
 (time (dorun (for [x (range 1000) y (range 10000) :while (> x y)] [x y]))) ;;这个例子展示了when和while的区别
+
+;;///doseq -> (doseq seq-exprs & body)
+;;Repeatedly executes body (presumably for side-effects) with bindings and filtering as provided by "for".
+;;Does not retain the head of the sequence. Returns nil.
+;;
+(doseq [x [-1 0 1]
+        y [1  2 3]]
+  (prn (* x y)))                                            ;;-1  -2  -3  0  0  0  1  2  3
+
+(doseq [[x y] (map list [1 2 3] [1 2 3])]
+  (prn (* x y)))                                            ;;1 4 9
 
 ;;/// cons -> (cons x seq)
 ;; Returns a new seq where x is the first element and seq is the rest.
@@ -337,7 +355,7 @@
 (def y (sort (aclone x)))
 
 
-;;sort-by -> (sort-by keyfn coll)(sort-by keyfn comp coll)
+;;///sort-by -> (sort-by keyfn coll)(sort-by keyfn comp coll)
 ;;Returns a sorted sequence of the items in coll, where the sort order is determined by comparing (keyfn item).
 ;;If no comparator is supplied, uses compare.  comparator must implement java.util.Comparator.
 ;;Guaranteed to be stable: equal elements will not be reordered.
@@ -348,7 +366,7 @@
 (sort-by first [[1 2] [2 2] [2 3]])
 (sort-by first > [[1 2] [2 2] [2 3]])
 
-;;/// compare -> (compare x y)
+;;///compare -> (compare x y)
 ;;Comparator. Returns a negative number, zero, or a positive number when x is logically 'less than', 'equal to' or
 ;;'greater than' y.
 
@@ -485,7 +503,8 @@
 (nth my-seq 0)                                              ;; => "a"
 (nth my-seq 1)                                              ;; => "b"
 
-(nth [] 0)                                                  ;; => 异常
+;;(nth [] 0)                                                  ;; => 异常
+
 (nth [] 0 "nothing found")                                  ;; => "nothing found"
 
 ;;/// nthnext -> (nthnext coll n)
@@ -602,6 +621,43 @@
 ;; 也可以放一些操作数放在操作域列表前，操作数和原有的操作域将共同组成一个操作域
 (apply + 1 2 '(3 4))  ; equivalent to (apply + '(1 2 3 4))
 
+;;some -> (some pred coll)
+;;Returns the first logical true value of (pred x) for any x in coll,else nil.
+;;One common idiom is to use a set as pred, for example this will return :fred if :fred is in the sequence,
+;;otherwise nil: (some #{:fred} coll)
+;;① 将pred应用到coll中的元素，直到第一个符合pred的元素为止，并返回pred的结果，如果都不符合pred，那么返回一个nil
+;;因为2是偶数，所以‘some’执行到这会停止，3和4不会被testd
+(some even? '(1 2 3 4))                                     ;;=> ture
+;;应为coll中的元素都不符合pred，所以返回nil
+(some even? '(1 3 5 7))                                     ;;=> nil
+;;直到符合pred的条件，并返回pred的结果
+(some #(when (even? %) %) '(1 2 3 4))                       ;;=> 2
+(some #(and (even? %) %) '(1 2 3 4))                        ;;=> 2  使用and代替when
+
+;;这里hash充当一个函数的角色，当key存在时，返回value，并停止，否则返回nil
+(some {2 "two" 3 "three"} [nil 3 2])                        ;;=> "three"
+(some {nil "nothing" 2 "two" 3 "three"} [nil 3 2])          ;;=> "nothing"
+
+;;这些例子说明了“Returns the first logical true value of (pred x) for any x in coll”
+(some {2 "two" 3 nil} [nil 3 2])   ;;=> "two"  当为key是3时，返回的结果在逻辑上不是true，所以some没有停止
+(some {4 "four" 3 nil} [nil 3 2])  ;;=> nil
+(some {4 "four" 3 nil} [nil 3 4])  ;;=> "four"
+
+;;some can be used as a substitute for (first (filter ...  in most cases.
+;;在一般情况下，some 都能替代 (first (filter ...
+(first (filter even? [1 2 3 4]))                            ;;=> 2
+(some #(if (even? %) %) [1 2 3 4])                          ;;=> 2
+
+;; find a whether a word is in a list of words.
+;;【一个应用】查找一个单词列表中是否包含某个单词
+(def word "foo")
+(def words ["bar" "baz" "foo" ""])
+(some (partial = word) words)
+
+(defn ne [n1 n2] (not= n1 n2))
+(defn sumlt [limit n1 n2] (> limit (+ n1 n2)))
+(some #(% 3 3) (list ne #(sumlt 10 %1 %2)))                 ;;这里把函数当成参数数据，即“代码即数据，数据即代码”的写照
+
 
 ;;///set -> (set coll)
 ;;Returns a set of the distinct elements of coll.
@@ -624,10 +680,41 @@
 ;;① 返回一个由 aseq 中元素组成的 array
 ;;② 数组中元素的类型的定义是这样的：a) 可以指定类型  b) 如果aseq不为空，则以aseq中第一个元素的类型为array中元素的类型(aseq中的元素类型要相同，不然会报出异常)
 ;; c) 当aseq中元素类型不一致时，也可以指定成Object
-(into-array [2 "4" "8" 5])                           ;;报出异常
+
+;;(into-array [2 "4" "8" 5])                           ;;报出异常
+
 (into-array Object [2 "4" "8" 5])                    ;;#<Object[] [Ljava.lang.Object;@3aa6d0a4>
 (into-array (range 4))                               ;;#<Integer[] [Ljava.lang.Integer;@63d6dc46>
 (into-array Byte/TYPE (range 4))
 
+;;/// dorun -> (dorun coll) (dorun n coll)
+;;可以强制实例化惰性序列  不保留惰性序列头部 并返回一个nil
+(dorun 5 (repeatedly #(println "hi")))
 
+;;/// doall -> (doall coll) (doall n coll)
+;;可以强制实例化惰性序列  保留惰性序列头部 并返回一个这个头部
+;;同时使全部的lazy-seq 写到内存
+(def foo (map println [1 2 3]))
+(def foo (doall (map println [1 2 3])))
 
+;;/// realized? -> (realized? x)
+;; Create a promise
+(def p (promise))                                           ;;#'user/p   ; p is our promise
+;; Check if was delivered/realized
+(realized? p)                                               ;;false      ; No yet
+;; Delivering the promise
+(deliver p 42)                                              ;;#<core$promise$reify__5727@47122d: 42>
+;; Check again if it was delivered
+(realized? p)                                               ;;true       ; Yes!
+;; Deref to see what has been delivered
+@p                                                          ;;42
+;; Note that @ is shorthand for deref
+(deref p)                                                   ;;42
+
+;;For lazy sequences
+(def r (range 5))                                           ;;
+(realized? r)                                               ;;=> false
+(first r)                                                   ;;=> 0
+(realized? r)                                               ;;=> true
+
+;;||||||||||||||||||||||||||||||||||||||||||||||   Sequences 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||||
