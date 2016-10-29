@@ -115,7 +115,12 @@
 ;;children must be a fn of one arg that returns a sequence of the children.
 ;;Will only be called on nodes for which branch? returns true.
 ;;Root is the root node of thetree.
-;;通过深度优先算法返回一个树种节点组成的惰性序列
+;;tree-seq =》通过深度优先算法遍历树，返回这个树的一个惰性序列
+;;    branch？ => 必须是一个只能接受一个参数的函数，当遍历到的节点有子节点是返回true，否则返回false
+;;    children => 必须是一个只能接受一个参数的函数，返回值是子节点的一个序列，
+;;    root => 树根
+;;当遍历到某个节点，此时的branch？返回值如果为true，则tree-seq被再次调用，并将该节点作为参数
+;;并将children的结果cons 返回
 (tree-seq seq? identity '((1 2 (3)) (4)))
 
 (keep even? (range 1 10))
@@ -316,7 +321,7 @@
 (partition-by #(= 3 %) [1 2 3 4 5])
 (partition-by #(= 3 %) [1 2 3 3 4 5 3])
 (partition-by odd? [1 1 1 2 2 3 3])
-(partition-by identity "Leeeeeerrroyyy")
+
 (partition-by identity "ABBA")
 (partition-by count ["a" "b" "ab" "ac" "c"])
 
@@ -720,18 +725,49 @@
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Sequences 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 
-
-
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Functions 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||
+;;/// constantly -> (constantly x)
+;;Returns a function that takes any number of arguments and returns x.
+;;返回值是一个函数，这个函数可以接受任意数目的参数，并且只返回 x
+(reduce + (map (constantly 1) [:a :b :c]))                  ;;这个例子是获取一个coll长度的另一个方法
+(map (constantly 9) [1 2 3])                                ;;=> (9 9 9)
+
+;;/// 斐波拉契数列
+(defn fib
+  ([n] (take n (fib 1 1)))
+  ([a b] (lazy-seq (cons a (fib b (+ a b))))))
+
+;;/// 杨辉三角  显示杨辉三角中的第x行中的数
+(defn yht-core
+  [x y]
+  ( if (or (= x y) (= y 1)) 1 ;;如果x=y 或者 y=1
+   (+ (yht-core (dec x) (dec y))
+      (yht-core (dec x) y)
+      )))
+(defn YH-triangle
+  [row]
+  (loop [b 1 r (list)] (if (> b row) r  (recur (inc b) (conj r (yht-core row b))))))
+
+
+;;/// 递归遍历 mapcat在这里起着一个遍历的作用
+(defn my-tree-seq
+  [branch?  root]
+  (let [walk (fn walk [node] (lazy-seq (cons node (when (branch? node)
+                                                    (mapcat walk node)
+                                                   )
+                                        )
+                              )
+               )
+        ]  (walk root)
+  )
+)
 
 
 
 
-
-
-
-
-
+(defn my-recursion [aconditions?  x]
+  (let [myfun (fn myfun [arg] (when (aconditions x) (map my-recursion x)))])
+  )
 
 
 
