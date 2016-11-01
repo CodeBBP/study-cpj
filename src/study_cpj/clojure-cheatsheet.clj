@@ -939,6 +939,30 @@
 (-> {:a 1} :b inc)                                          ;;NullPointerException   clojure.lang.Numbers.ops (Numbers.java:942)
 (some-> {:a 1} :b inc)                                      ;;=> nil
 
+;;/// if-let -> (if-let bindings then)(if-let bindings then else & oldform)
+;;bindings => binding-form test
+;;If test is true, evaluates then with binding-form bound to the value of test,
+;;if not,yields else
+;;bindings:是一个 binding-form test. 当test的值是true时，使用test的值进行绑定，并将绑定的结果代入到then后面的式子中
+;;否则，返回else的内容
+(defn sum-even-numbers [nums]
+  (if-let [nums (seq (filter even? nums))]
+    (reduce + nums)
+    "No even numbers found."))
+(sum-even-numbers [1 3 5 7 9])                              ;;=> "No even numbers found."
+(sum-even-numbers [1 3 5 7 9 10 12])                        ;;=> 22
+
+;; This macro is nice when you need to calculate something big. And you need to use the result but only when it's true:
+;(if-let [life (meaning-of-life 12)]
+;  life
+;  (if-let [origin (origin-of-life 1)]
+;    origin
+;    (if-let [shot (who-shot-jr 5)]
+;      block-sol
+;      42)))
+;; As you can see in the above example it will return the answer to the question only if the answer is not nil.
+;;If the answer is nil it will move to the next question. Until finally it gives up and returns 42.
+
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Functions 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 
