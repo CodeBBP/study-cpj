@@ -728,9 +728,162 @@
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Functions 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||
 ;;/// constantly -> (constantly x)
 ;;Returns a function that takes any number of arguments and returns x.
-;;返回值是一个函数，这个函数可以接受任意数目的参数，并且只返回 x
+;;返回值是一个函数 f，这个函数 f 可以接受任意数目的参数，并且只返回 x
 (reduce + (map (constantly 1) [:a :b :c]))                  ;;这个例子是获取一个coll长度的另一个方法
 (map (constantly 9) [1 2 3])                                ;;=> (9 9 9)
+
+;;/// comp -> (comp) (comp f) (comp f g) (comp f g & fs)
+;;Takes a set of functions and returns a fn that is the composition of those fns.
+;;The returned fn takes a variable number of args,applies the rightmost of fns to the args,
+;;the next fn (right-to-left) to the result, etc.
+;;接受一组函数fns作为参数，返回一个函数，这个函数由fns组成.
+;;将args首先用fns中最右边的函数，并将结果用fns中右边第二个函数求值 ... 一直到最左边的函数
+(def negative-quotient (comp - /))
+(negative-quotient 8 3)                                     ;;=> -8/3
+
+(def countif (comp count filter))
+(countif even? [2 3 1 5 4])                                 ;;=> 2
+
+;;/// complement -> (complement f)
+;;Takes a fn f and returns a fn that takes the same arguments as f,
+;;has the same effects, if any, and returns the opposite truth value.
+;;接受一个函数 f 作为参数，并且返回一个函数fr，fr接受参数个数与 f 的相同
+;;fr与f不同的是：fr返回的逻辑值与f的相反
+(def not-empty? (complement empty?))
+(not-empty? [])    ;;=> false
+(not-empty? [1 2]) ;;=> true
+
+;;/// partial ->
+;;(partial f) (partial f arg1) (partial f arg1 arg2) (partial f arg1 arg2 arg3) (partial f arg1 arg2 arg3 & more)
+;;Takes a function f and fewer than the normal arguments to f, and returns a fn that
+;;takes a variable number of additional args.
+;;When called, the returned function calls f with args + additional args.
+;;参数是一个函数 f 和f 的一些参数，返回值也是一个函数fr ，fr的参数是f剩下的参数，fr的功能与f的功能相同
+(def hundred-times (partial * 100))
+(hundred-times 5)                                           ;; => 500
+
+;;/// juxt -> (juxt f) (juxt f g) (juxt f g h) (juxt f g h & fs)
+;;Takes a set of functions and returns a fn that is the juxtaposition of those fns.
+;;The returned fn takes a variable number of args, and returns a vector containing
+;;the result of applying each fn to the args (left-to-right).
+;;((juxt a b c) x)  -> [(a x) (b x) (c x)]
+;;接受一组函数 f 作为参数，并且返回一个函数 fr
+;;返回的fr接受一组参数，并且fr返回一个vector，这个vector包含一组结果，这个结果是将所有参数从左到右一一
+;;应用到fr中的函数返回的结果
+((juxt identity name) :keyword)
+;;这个和下面的效果等效
+(fn [x] [(identity x) (name x)])
+
+((juxt + * min max) 3 4 6)                                  ;;=> [13 72 3 6]
+((juxt take drop) 3 [1 2 3 4 5 6])                          ;;=> [(1 2 3) (4 5 6)]
+
+;;/// memoize -> (memoize f)
+;;Returns a memoized version of a referentially transparent function.
+;;The memoized version of the function keeps a cache of the mapping from arguments to results and,
+;;when calls with the same arguments are repeated often, has higher performance at the expense of higher memory use.
+;;返回一个函数，这个函数是一个memoized version of a referentially transparent
+;;这个函数将返回一个参数结果组成的map
+;;这个函数具有很高的效率
+;;没有加入memoize，函数效率低下
+(defn fib [n]
+  (condp = n
+    0 1
+    1 1
+    (+ (fib (dec n)) (fib (- n 2)))))
+(time (fib 40))                                             ;;"Elapsed time: 13649.18876 msecs"
+;;加入memoize后，函数的效率提升
+(def m-fib
+  (memoize (fn [n]
+             (condp = n
+               0 1
+               1 1
+               (+ (m-fib (dec n)) (m-fib (- n 2)))))))
+(time (m-fib 40))                                           ;;"Elapsed time: 0.08296 msecs"
+
+;;/// fnil -> (fnil f x) (fnil f x y) (fnil f x y z)
+;;Takes a function f, and returns a function that calls f, replacing a nil first argument to f with the supplied value x.
+;;Higher arity versions can replace arguments in the second and third positions (y, z). Note that the function f can
+;;take any number of arguments, not just the one(s) being nil-patched.
+;;fnil 的一个参数是一个函数f，剩余的参数是一些指定的值，这些值的作用是当f接受的参数是nil是，可以替换nil
+(defn say-hello [name] (str "Hello " name))
+(def say-hello-with-defaults (fnil say-hello "World"))
+(say-hello-with-defaults "Sir")                             ;; => "Hello Sir"
+(say-hello-with-defaults nil)                               ;; => "Hello World"
+
+;;/// every-pred -> (every-pred p) (every-pred p1 p2) (every-pred p1 p2 p3) (every-pred p1 p2 p3 & ps)
+;;Takes a set of predicates and returns a function f that returns true if all of its composing predicates return a
+;;logical true value against all of its arguments, else it returns false. Note that f is short-circuiting in that it
+;;will stop execution on the first argument that triggers a logical false result against the original predicates.
+;;接受一组谓词函数，并且返回值是一个函数fr，将fr的所有参数应用组成fr的所有谓词函数，每个谓词函数都返回true时，则fr返回true，否则返回false
+;;当遇到第某个谓词函数的返回值是false时，every-pred停止执行后面的谓词函数
+;;当fr后面不含参数时，fr的返回值是true
+((every-pred (constantly false)))                           ;;=> true
+((every-pred (constantly false)) 1)                         ;;=> false
+
+;;/// some-fn -> (some-fn p) (some-fn p1 p2) (some-fn p1 p2 p3) (some-fn p1 p2 p3 & ps)
+;;Takes a set of predicates and returns a function f that returns the first logical true value
+;;returned by one of its composing predicates against any of its arguments, else it returns
+;;logical false. Note that f is short-circuiting in that it will stop execution on the first
+;;argument that triggers a logical true result against the original predicates.
+;;接受一组谓词函数作为参数，并且返回一个函数fr作为返回值。
+
+;; `some-fn` is useful for when you'd use `some` (to find out if any
+;; values in a given coll satisfy some predicate), but have more than
+;; one predicate. For example, to check if any values in a coll are
+;; either even or less than 10:
+;;当你使用some，但是有多个谓词函数时，‘some-fn’就显得十分有用
+(or (some even? [1 2 3]) (some #(< % 10) [1 2 3]))
+;;使用some-fn写：
+((some-fn even? #(< % 10)) 1 2 3)
+
+;;/// ->  : (-> x & forms)
+;;Threads the expr through the forms.
+;;Inserts x as the second item in the first form, making a list of it if it is not a list already.
+;;If there are more forms, inserts the first form as the second item in second form, etc.
+;;通过形式形成一个表达式，将x作为第一个函数的第一个参数，返回结果r，将r作为第二个函数的第一个参数，......
+
+;; Use of `->` (the "thread-first" macro) can help make code more readable by removing nesting.
+;;It can be especially useful when using host methods:
+;;当有许多函数被嵌套使用时，使用 -> 能够形成一个高可读性的代码
+(first (.split (.replace (.toUpperCase "a b c d") "A" "X") " "))
+(-> "a b c d" .toUpperCase (.replace "A" "X") (.split " ") first)
+
+;; It can also be useful for pulling values out of deeply-nested data structures:
+;; 使用 -> 也可以便利的从高嵌套的数据结构中取出数据
+(def person
+  {:name "Mark Volkmann"
+   :address {:street "644 Glen Summit"
+             :city "St. Charles"
+             :state "Missouri"
+             :zip 63304}
+   :employer {:name "Object Computing, Inc."
+              :address {:street "12140 Woodcrest Dr."
+                        :city "Creve Coeur"
+                        :state "Missouri"
+                        :zip 63141}}})
+
+(-> person :employer :address :city)                        ;;=> "Creve Coeur"
+
+;;/// ->> : (->> x & forms)
+;;Threads the expr through the forms. Inserts x as the last item in the first form,
+;;making a list of it if it is not a list already. If there are more forms, inserts
+;;the first form as the last item in second form, etc.
+;;通过形式形成一个表达式，将x作为第一个函数的最后一个参数，返回结果r，将r作为第二个函数的最后一个参数，......
+(->> (range) (map #(* % %)) (filter even?) (take 10) (reduce +))
+;;与嵌套的写法
+(reduce + (take 10 (filter even? (map #(* % %) (range)))))
+
+;;/// trampoline -> (trampoline f) (trampoline f & args)
+;;trampoline can be used to convert algorithms requiring mutual recursion without stack consumption.
+;;Calls f with supplied args, if any. If f returns a fn, calls that fn with no arguments, and continues to repeat,
+;;until the return value is not a fn, then returns that non-fn value. Note that if you want to return a fn as a
+;;final value, you must wrap it in some data structure and unpack it after trampoline returns.
+;;不知道是干嘛的
+
+
+
+
+
 
 ;;/// 斐波拉契数列
 (defn fib
@@ -752,22 +905,14 @@
 ;;/// 递归遍历 mapcat在这里起着一个遍历的作用
 (defn my-tree-seq
   [branch?  root]
-  (let [walk (fn walk [node] (lazy-seq (cons node (when (branch? node)
-                                                    (mapcat walk node)
-                                                   )
-                                        )
-                              )
-               )
+  (let [walk (fn walk [node]
+               (lazy-seq (cons node (when (branch? node) (mapcat walk node)))))
         ]  (walk root)
   )
 )
 
+(defn test-my [x y] (print " xxx:" x) (if (zero? y) x (recur (- x 2) (- y 1))))
 
-
-
-(defn my-recursion [aconditions?  x]
-  (let [myfun (fn myfun [arg] (when (aconditions x) (map my-recursion x)))])
-  )
 
 
 
