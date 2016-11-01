@@ -939,7 +939,7 @@
 (-> {:a 1} :b inc)                                          ;;NullPointerException   clojure.lang.Numbers.ops (Numbers.java:942)
 (some-> {:a 1} :b inc)                                      ;;=> nil
 
-
+;;||||||||||||||||||||||||||||||||||||||||||||||   Functions 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 
 
