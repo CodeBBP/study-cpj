@@ -626,7 +626,7 @@
 ;; 也可以放一些操作数放在操作域列表前，操作数和原有的操作域将共同组成一个操作域
 (apply + 1 2 '(3 4))  ; equivalent to (apply + '(1 2 3 4))
 
-;;some -> (some pred coll)
+;;/// some -> (some pred coll)
 ;;Returns the first logical true value of (pred x) for any x in coll,else nil.
 ;;One common idiom is to use a set as pred, for example this will return :fred if :fred is in the sequence,
 ;;otherwise nil: (some #{:fred} coll)
@@ -880,6 +880,69 @@
 ;;final value, you must wrap it in some data structure and unpack it after trampoline returns.
 ;;不知道是干嘛的
 
+;;/// as-> : (as-> expr name & forms)
+;; Binds name to expr, evaluates the first form in the lexical context of that binding, then binds name to that result,
+;;repeating for each successive form, returning the result of the last form.
+;;将name绑定到expr，对第一个form求值，将name对这个结果进行绑定，执行下一个form。
+;;对于任一一个可成功的form进行上面的操作，返回最后一个form求值的结果
+(as-> 0 n
+      (inc n)  ; n is 0 here passed from first parameter to as->
+      (inc n)) ; n is 1 here passed from result of previous inc expression
+
+;;【与 -> 的区别】 -> 只能将 参数/结果 传入到后面每个form的第一个参数的位置，
+;; as-> 却可以同过 n 将 参数/结果 传入form指定的参数的位置
+(as-> 0 n (+ 2 n)  (str "我是第一个参数...  " "上一个form的结果是：" n "  我是第三个参数..."))
+
+;; 这个例子展示了一种从数据结构中取值的方法
+(def owners [{:owner "Jimmy"
+              :pets (ref [{:name "Rex"
+                           :type :dog}
+                          {:name "Sniffles"
+                           :type :hamster}])}
+             {:owner "Jacky"
+              :pets (ref [{:name "Spot"
+                           :type :mink}
+                          {:name "Puff"
+                           :type :magic-dragon}])}])
+(as-> owners $ (nth $ 0) (:pets $) (deref $) ($ 1) ($ :type)) ;;=> :hamster
+
+;;/// cond-> : (cond-> expr & clauses)
+;;Takes an expression and a set of test/form pairs. Threads expr (via ->) through each form for which the corresponding
+;;test expression is true. Note that, unlike cond branching, cond-> threading does not short circuit after the first
+;;true test expression.
+;;接受一个表达式和一组test/form对作为参数。当test的求值结果是true时，使用 -> 将expr代入对应的form求值
+(cond-> 100
+        true  (/ 1)
+        true  (/ 5)
+        false (/ 3)                                         ;;因为test的值为false，所以（/ 3）没有执行
+        true  (/ 2))                                        ;;=> 10
+
+;;Useful when you want to conditionally evaluate expressions and thread them together.
+;;For instance, the following returns a vector containing the names (as symbols) of the implementing classes of instance.
+;;对一组具有求值条件表达式求值是非常有效的,......
+(defn instance->types
+  [instance]
+  (cond-> []
+          (instance? java.util.SortedMap instance) (conj 'SortedMap)
+          (instance? java.util.AbstractMap instance) (conj 'AbstractMap)))
+
+(def hm (java.util.HashMap.))
+(instance->types hm)                                        ;;=> [AbstractMap]
+
+(def tm (java.util.TreeMap.))
+(instance->types tm)                                        ;;=> [SortedMap AbstractMap]
+
+;;/// some->  : (some-> expr & forms)
+;;When expr is not nil, threads it into the first form (via ->),and when that result is not nil, through the next etc
+;;当expr不是nil时，将expr -> 到forms中的第一个form中，求值.当求值结果不是nil时，将结果 -> 到forms中的第二个form中 ...
+;;当某个form的求值结果是nil，则停止后面的form求值，并返回nil
+(-> {:a 1} :b inc)                                          ;;NullPointerException   clojure.lang.Numbers.ops (Numbers.java:942)
+(some-> {:a 1} :b inc)                                      ;;=> nil
+
+
+
+
+
 
 
 
@@ -912,37 +975,5 @@
 )
 
 (defn test-my [x y] (print " xxx:" x) (if (zero? y) x (recur (- x 2) (- y 1))))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Functions 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||
