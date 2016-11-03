@@ -236,7 +236,7 @@
 ;;/// interpose -> (interpose sep)(interpose sep coll)
 ;;Returns a lazy seq of the elements of coll separated by sep.
 ;;Returns a stateful transducer when no collection is provided.
-(apply str (interpose "," [1 2 3 4]))                       ;->(clojure.string/join "," [1 2 3 4])
+(apply str (interpose "," [1 2 3 4]))                       ;=> "1,2,3,4"
 
 ;;/// drop -> (drop n)(drop n coll)
 ;;Returns a lazy sequence of all but the first n items in coll.
