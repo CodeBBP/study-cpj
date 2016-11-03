@@ -243,6 +243,7 @@
   ((partial apply str) x)
   )
 
+
 ;;函数（功能）的组合
 ;例子1：给定一个列表的数字，返回这些数字的总和的负数的字符串形式
 (defn negated-sum-str [ & numbers]
@@ -255,10 +256,75 @@
 ;其他例子
 (def concat-and-reverse-comp (comp (partial apply str) reverse str))
 
-(require '[clojure.string :as set-str])
+(require '[clojure.string :as str])
 (def camel->keyword(
-  comp keyword set-str/join (partial interpose )))
+  comp keyword
+       str/join
+       (partial interpose \-)
+       (partial map str/lower-case )
+       #(str/split % #"(?<=[a-z])(?=[A-Z])")))
 
+
+;;【编写高阶函数】
+(defn adder
+  [n]
+  (fn [X] (+ n X)))                                         ;;adder 求值的结果是一个函数，并非是一个特定的值
+
+((adder 5) 18)                                              ;;=> 23
+
+(defn doubler
+  [f]
+  (fn [& args]
+    (* 2 (apply f args)))) ;doubler将参数f（实际上是一个函数）作为匿名函数的一部分，doubler的求值结果是一个函数
+(def doulbe-+ (doubler +)) ;将+函数作为参数穿传给doubler，doubler的求值结果是一个匿名函数
+
+(doulbe-+ 1 2 3)
+
+
+;;日志系统
+(defn print-logger
+  [writer]
+  #(binding [*out* writer]
+    (print % "\n")))
+
+;; 把消息写入到内存
+(def writer (java.io.StringWriter.))
+(def retained-logger (print-logger writer))
+(retained-logger "Hello!")                                  ;;这里是无法看到信息的
+(str writer)                                                ;;=> "Hello!\n"
+
+;;把消息写入文件
+(require 'clojure.java.io)
+(defn file-logger
+  [file]
+  #(with-open [f (clojure.java.io/writer file :append true)]
+    ((print-logger f) %)))
+(def log->file (file-logger "C:\\Users\\BBP\\Desktop\\message.log"))
+(log->file "Hello! Log")
+
+;;一次打印日志到多个地方
+(defn multi-logger
+  [& logger-fns]
+  #(doseq [f logger-fns]
+    (f %)))
+
+(def log (multi-logger
+           (print-logger *out*)
+           (file-logger "C:\\Users\\BBP\\Desktop\\message.log")
+           ))
+(log "Hello,亲！")
+
+;;处理日志字符
+(defn timestaped-logger
+  [logger]
+  #(logger (format "[%1$tY-%1$tm-%1$te %1$tH:%1$tM:%1$tS] %2&s" (java.util.Date.) %)))
+
+(def log-timestaped (timestaped-logger
+                      (multi-logger
+                        (print-logger *out*)
+                        (file-logger "C:\\Users\\BBP\\Desktop\\message.log")
+                        )
+                      ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; 函数式编程结束 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
