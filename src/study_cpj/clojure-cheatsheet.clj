@@ -64,6 +64,67 @@
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Queues 结束   |||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 
+;;||||||||||||||||||||||||||||||||||||||||||||||   Collections 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||
+
+;;/// assoc-in -> (assoc-in m [k & ks] v)
+;; Associates a value in a nested associative structure, where ks is a sequence of keys and v is the new value
+;; and returns a new nested structure.If any levels do not exist, hash-maps will be created.
+;; 将一个值关联到嵌套关联结构中，ks是一组keys，v是新的value，并且函数将返回一个新的嵌套解构
+;; 如果某个key不存在，hash-map将被创建，如果存在，value将被覆盖
+(def users [{:name "James" :age 26}  {:name "John" :age 43}])
+;; update the age of the second (index 1) user
+(assoc-in users [1 :age] 44) ;;=> [{:name "James", :age 26} {:name "John", :age 44}]
+;; insert the password of the second (index 1) user
+(assoc-in users [1 :password] "nhoJ") ;;=> [{:name "James", :age 26} {:password "nhoJ", :name "John", :age 43}]
+;; create a third (index 2) user
+;; Also (assoc m 2 {...}) or (conj m {...})
+(assoc-in users [2] {:name "Jack" :age 19}) ;;=> [{:name "James", :age 26} {:name "John", :age 43} {:name "Jack", :age 19}]
+
+;; can be used to update a mutable item.
+(def ppl (atom {"persons" {"joe" {:age 1}}}))
+(swap! ppl assoc-in ["persons" "bob"] {:age 11})
+@ppl ;;=> {"persons" {"joe" {:age 1}, "bob" {:age 11}}}
+
+;; be careful with that empty path sequence, it's seldom what you want
+(assoc-in {} [] {:k :v})  ;;=> {nil {:k :v}}
+
+;; another example of updating a mutable item.
+;; this time the first key is to a map and the second to a vector.
+(def foo (atom {:users [{:a "a"} {:b "b"}]}))
+(swap! foo assoc-in [:users 2] {:c "c"}) ;;=> {:users [{:a "a"} {:b "b"} {:c "c"}]}
+
+;; assoc-in into a nested map structure
+(def foo {:user {:bar "baz"}})
+(assoc-in foo [:user :id] "some-id")  ;;=> {:user {:bar "baz", :id "some-id"}}
+
+(assoc-in {} [:cookie :monster :vocals] "Finntroll")  ; => {:cookie {:monster {:vocals "Finntroll"}}}
+(get-in {:cookie {:monster {:vocals "Finntroll"}}} [:cookie :monster])  ; => {:vocals "Finntroll"}
+(assoc-in {} [1 :connections 4] 2)  ; => {1 {:connections {4 2}}}
+
+
+;;/// get-in -> (get-in m ks)(get-in m ks not-found)
+;; Returns the value in a nested associative structure,where ks is a sequence of keys.
+;; Returns nil if the key is not present, or the not-found value if supplied.
+;; 返回一个嵌套关联结构中的值。ks是一组key。如果key不存在，返回空或者放回指定的值
+(def m {:username "sally"
+        :profile {:name "Sally Clojurian"
+                  :address {:city "Austin" :state "TX"}}})
+(get-in m [:profile :name])                                 ;;=> "Sally Clojurian"
+(get-in m [:profile :address :city])                        ;;=> "Austin"
+(get-in m [:profile :address :zip-code])                    ;;=> nil
+(get-in m [:profile :address :zip-code] "no zip code!")     ;;=> "no zip code!"
+
+;; We can mix associative types:
+(def mv {:username "jimmy"
+         :pets [{:name "Rex"
+                 :type :dog}
+                {:name "Sniffles"
+                 :type :hamster}]})
+(get-in mv [:pets 1 :type])                                 ;;=> :hamster
+
+
+;;||||||||||||||||||||||||||||||||||||||||||||||   Collections 结束   ||||||||||||||||||||||||||||||||||||||||||||||||||
+
 
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Sequences 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||
 (seq [1 2])
@@ -998,6 +1059,11 @@
   )
 )
 
-(defn test-my [x y] (print " xxx:" x) (if (zero? y) x (recur (- x 2) (- y 1))))
+(defn repeat-fun
+  "返回一个惰性数组，作用是把参数x代入到f中执行"
+  [f x]
+  (let [result (f x)]
+    (lazy-seq (cons result (repeat-fun f x)))))
 
+(take 10 (repeat-fun rand-int 10))
 ;;||||||||||||||||||||||||||||||||||||||||||||||   Functions 开始   ||||||||||||||||||||||||||||||||||||||||||||||||||||

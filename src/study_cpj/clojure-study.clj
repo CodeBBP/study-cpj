@@ -404,6 +404,17 @@
   (let [[t d]])
   )
 
+
+;;【简洁的访问集合元素】
+;;不显示的使用get
+(map :name [
+            {:name "bbp" :age 21 :gender "man"}
+            {:name "bbc" :age 22 :gender "man"}
+            {:name "bbq" :age 23 :gender "man"}
+            {:name "bbr" :age 25 :gender "man"}
+            ])
+
+(some #{1 2 3} [5 7 6 1 2 3 4])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; 集合类与数据结构结束 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
